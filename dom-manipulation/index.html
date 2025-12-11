@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic Quote Generator — Task 1</title>
+  <title>Dynamic Quote Generator — Task 2</title>
 
   <style>
     body {
@@ -19,11 +19,7 @@
       font-size: 1.2rem;
     }
 
-    #addForm {
-      margin-top: 30px;
-    }
-
-    input {
+    input, select {
       padding: 8px;
       margin: 5px;
       width: 260px;
@@ -33,6 +29,10 @@
       padding: 10px 15px;
       cursor: pointer;
       margin-top: 10px;
+    }
+
+    #addForm {
+      margin-top: 20px;
     }
 
     #storageSection {
@@ -45,8 +45,15 @@
 </head>
 <body>
 
-  <h1>Dynamic Quote Generator — Task 1</h1>
+  <h1>Dynamic Quote Generator — Task 2</h1>
 
+  <!-- Filter Section -->
+  <h3>Filter Quotes by Category</h3>
+  <select id="categoryFilter" onchange="filterQuotes()">
+    <option value="all">All Categories</option>
+  </select>
+
+  <!-- Display Area -->
   <div id="quoteDisplay"></div>
   <button id="newQuote">Show New Quote</button>
 
@@ -60,7 +67,7 @@
     <button id="addQuoteBtn">Add Quote</button>
   </div>
 
-  <!-- Storage + JSON Section -->
+  <!-- JSON Import / Export -->
   <div id="storageSection">
     <h3>JSON Import / Export</h3>
 
