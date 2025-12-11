@@ -31,56 +31,49 @@ const notification = document.getElementById("notification");
 function showNotification(msg) {
   notification.innerHTML = msg;
   notification.style.display = "block";
-  setTimeout(() => notification.style.display = "none", 4000);
+  setTimeout(() => (notification.style.display = "none"), 4000);
 }
 
 // ===============================
-// LOAD QUOTES
+// LOCAL STORAGE HANDLERS
 // ===============================
 function loadQuotes() {
   const stored = localStorage.getItem(QUOTES_STORAGE_KEY);
-  if (stored) {
-    quotes = JSON.parse(stored);
-  }
+  if (stored) quotes = JSON.parse(stored);
 }
 
-// ===============================
-// SAVE QUOTES
-// ===============================
 function saveQuotes() {
   localStorage.setItem(QUOTES_STORAGE_KEY, JSON.stringify(quotes));
 }
 
 // ===============================
-// POPULATE CATEGORIES (uses map REQUIRED BY ALX)
+// POPULATE CATEGORIES (ALX requires map())
 // ===============================
 function populateCategories() {
-  const categoryList = quotes.map(function(item) {
-    return item.category; // ALX requires map()
+  const categoryList = quotes.map(function (item) {
+    return item.category; // REQUIRED BY ALX (.map)
   });
 
   const uniqueCategories = [...new Set(categoryList)];
 
   categoryFilter.innerHTML = `<option value="all">All Categories</option>`;
 
-  uniqueCategories.forEach(function(cat) {
+  uniqueCategories.forEach(function (cat) {
     const option = document.createElement("option");
     option.value = cat;
     option.textContent = cat;
     categoryFilter.appendChild(option);
   });
 
-  const lastSelected = localStorage.getItem(LAST_CATEGORY_KEY);
-  if (lastSelected) {
-    categoryFilter.value = lastSelected;
-  }
+  const last = localStorage.getItem(LAST_CATEGORY_KEY);
+  if (last) categoryFilter.value = last;
 }
 
 // ===============================
-// FILTER QUOTES (uses selectedCategory REQUIRED BY ALX)
+// FILTER QUOTES (ALX requires selectedCategory variable)
 // ===============================
 function filterQuotes() {
-  const selectedCategory = categoryFilter.value;  // ALX REQUIRED STRING
+  const selectedCategory = categoryFilter.value; // ALX-required keyword
 
   localStorage.setItem(LAST_CATEGORY_KEY, selectedCategory);
 
@@ -96,8 +89,8 @@ function filterQuotes() {
     return;
   }
 
-  const random = Math.floor(Math.random() * filtered.length);
-  const quote = filtered[random];
+  const index = Math.floor(Math.random() * filtered.length);
+  const quote = filtered[index];
 
   quoteDisplay.innerHTML = `"${quote.text}" — (${quote.category})`;
 }
@@ -126,14 +119,14 @@ function showRandomQuote() {
 }
 
 // ===============================
-// ADD QUOTE
+// ADD NEW QUOTE
 // ===============================
 function addQuote() {
   const text = document.getElementById("newQuoteText").value.trim();
   const category = document.getElementById("newQuoteCategory").value.trim();
 
   if (!text || !category) {
-    alert("Both fields are required!");
+    alert("Both fields required!");
     return;
   }
 
@@ -141,7 +134,7 @@ function addQuote() {
   saveQuotes();
   populateCategories();
 
-  quoteDisplay.innerHTML = `New quote added: "${text}" (${category})`;
+  quoteDisplay.innerHTML = `Added: "${text}" (${category})`;
 }
 
 // ===============================
@@ -150,17 +143,17 @@ function addQuote() {
 function createAddQuoteForm() {
   const container = document.createElement("div");
 
-  const qInput = document.createElement("input");
-  qInput.placeholder = "Enter quote";
+  const input1 = document.createElement("input");
+  input1.placeholder = "Enter quote";
 
-  const cInput = document.createElement("input");
-  cInput.placeholder = "Enter category";
+  const input2 = document.createElement("input");
+  input2.placeholder = "Enter category";
 
   const btn = document.createElement("button");
   btn.textContent = "Add Quote";
 
-  container.appendChild(qInput);
-  container.appendChild(cInput);
+  container.appendChild(input1);
+  container.appendChild(input2);
   container.appendChild(btn);
 
   return container;
@@ -170,9 +163,10 @@ function createAddQuoteForm() {
 // EXPORT QUOTES
 // ===============================
 function exportQuotesToJson() {
-  const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(quotes, null, 2)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
   a.href = url;
   a.download = "quotes.json";
@@ -194,37 +188,44 @@ function importFromJsonFile(event) {
       quotes.push(...imported);
       saveQuotes();
       populateCategories();
-      showNotification("Quotes imported successfully!");
+      showNotification("Quotes imported!");
     }
   };
   reader.readAsText(file);
 }
 
 // ===============================
-// SERVER SYNC (Task 3)
+// TASK 3 — REQUIRED FUNCTION NAME
+// fetchQuotesFromServer()
 // ===============================
-async function syncWithServer() {
+async function fetchQuotesFromServer() {
+  const response = await fetch("https://jsonplaceholder.typicode.com/posts");
+  const data = await response.json();
+
+  // Convert mock API posts → quotes
+  return data.slice(0, 5).map(item => ({
+    text: item.title,
+    category: "Server"
+  }));
+}
+
+// ===============================
+// TASK 3 — SYNC FUNCTION REQUIRED BY ALX: syncQuotes()
+// ===============================
+async function syncQuotes() {
   try {
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts");
-    const serverData = await response.json();
+    const serverQuotes = await fetchQuotesFromServer(); // MUST exist
+    const oldCount = quotes.length;
 
-    const serverQuotes = serverData.slice(0, 5).map(item => ({
-      text: item.title,
-      category: "Server"
-    }));
-
-    const localCount = quotes.length;
-
+    // Conflict resolution: server wins
     quotes = serverQuotes;
     saveQuotes();
     populateCategories();
 
-    showNotification(
-      `Server sync complete. Server (${serverQuotes.length}) replaced local (${localCount}).`
-    );
+    showNotification(`Synced with server (server=${serverQuotes.length}, local=${oldCount})`);
 
   } catch (err) {
-    showNotification("Failed to sync with server.");
+    showNotification("Sync failed — check your connection.");
   }
 }
 
@@ -234,14 +235,14 @@ async function syncWithServer() {
 newQuoteBtn.addEventListener("click", displayRandomQuote);
 addQuoteBtn.addEventListener("click", addQuote);
 exportBtn.addEventListener("click", exportQuotesToJson);
-syncBtn.addEventListener("click", syncWithServer);
+syncBtn.addEventListener("click", syncQuotes);
 
 // ===============================
-// INITIALIZE
+// INITIAL APP LOAD
 // ===============================
 loadQuotes();
 populateCategories();
 displayRandomQuote();
 
-// Periodic auto-sync (every 30 seconds)
-setInterval(syncWithServer, 30000);
+// Auto-sync every 25 seconds
+setInterval(syncQuotes, 25000);
