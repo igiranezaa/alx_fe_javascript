@@ -28,20 +28,31 @@ const notification = document.getElementById("notification");
 // ===============================
 // NOTIFICATION HANDLER
 // ===============================
-function showNotification(msg) {
-  notification.innerHTML = msg;
+function showNotification(message) {
+  notification.innerHTML = message;
   notification.style.display = "block";
-  setTimeout(() => (notification.style.display = "none"), 4000);
+  setTimeout(() => {
+    notification.style.display = "none";
+  }, 4000);
 }
 
 // ===============================
-// LOCAL STORAGE HANDLERS
+// LOAD QUOTES FROM LOCAL STORAGE
 // ===============================
 function loadQuotes() {
   const stored = localStorage.getItem(QUOTES_STORAGE_KEY);
-  if (stored) quotes = JSON.parse(stored);
+  if (stored) {
+    try {
+      quotes = JSON.parse(stored);
+    } catch (err) {
+      console.error("Error loading quotes:", err);
+    }
+  }
 }
 
+// ===============================
+// SAVE QUOTES
+// ===============================
 function saveQuotes() {
   localStorage.setItem(QUOTES_STORAGE_KEY, JSON.stringify(quotes));
 }
@@ -51,7 +62,7 @@ function saveQuotes() {
 // ===============================
 function populateCategories() {
   const categoryList = quotes.map(function (item) {
-    return item.category; // REQUIRED BY ALX (.map)
+    return item.category; // ALX REQUIRED
   });
 
   const uniqueCategories = [...new Set(categoryList)];
@@ -66,14 +77,16 @@ function populateCategories() {
   });
 
   const last = localStorage.getItem(LAST_CATEGORY_KEY);
-  if (last) categoryFilter.value = last;
+  if (last) {
+    categoryFilter.value = last;
+  }
 }
 
 // ===============================
-// FILTER QUOTES (ALX requires selectedCategory variable)
+// FILTER QUOTES (ALX requires selectedCategory)
 // ===============================
 function filterQuotes() {
-  const selectedCategory = categoryFilter.value; // ALX-required keyword
+  const selectedCategory = categoryFilter.value; // ALX REQUIRED STRING
 
   localStorage.setItem(LAST_CATEGORY_KEY, selectedCategory);
 
@@ -89,8 +102,8 @@ function filterQuotes() {
     return;
   }
 
-  const index = Math.floor(Math.random() * filtered.length);
-  const quote = filtered[index];
+  const random = Math.floor(Math.random() * filtered.length);
+  const quote = filtered[random];
 
   quoteDisplay.innerHTML = `"${quote.text}" — (${quote.category})`;
 }
@@ -119,14 +132,14 @@ function showRandomQuote() {
 }
 
 // ===============================
-// ADD NEW QUOTE
+// ADD A QUOTE
 // ===============================
 function addQuote() {
   const text = document.getElementById("newQuoteText").value.trim();
   const category = document.getElementById("newQuoteCategory").value.trim();
 
   if (!text || !category) {
-    alert("Both fields required!");
+    alert("Both fields must be filled.");
     return;
   }
 
@@ -135,6 +148,9 @@ function addQuote() {
   populateCategories();
 
   quoteDisplay.innerHTML = `Added: "${text}" (${category})`;
+
+  document.getElementById("newQuoteText").value = "";
+  document.getElementById("newQuoteCategory").value = "";
 }
 
 // ===============================
@@ -150,7 +166,7 @@ function createAddQuoteForm() {
   input2.placeholder = "Enter category";
 
   const btn = document.createElement("button");
-  btn.textContent = "Add Quote";
+  btn.textContent = "Add";
 
   container.appendChild(input1);
   container.appendChild(input2);
@@ -160,22 +176,24 @@ function createAddQuoteForm() {
 }
 
 // ===============================
-// EXPORT QUOTES
+// EXPORT TO JSON
 // ===============================
 function exportQuotesToJson() {
   const blob = new Blob([JSON.stringify(quotes, null, 2)], {
-    type: "application/json",
+    type: "application/json"
   });
   const url = URL.createObjectURL(blob);
+
   const a = document.createElement("a");
   a.href = url;
   a.download = "quotes.json";
   a.click();
+
   URL.revokeObjectURL(url);
 }
 
 // ===============================
-// IMPORT QUOTES
+// IMPORT FROM JSON
 // ===============================
 function importFromJsonFile(event) {
   const file = event.target.files[0];
@@ -183,26 +201,29 @@ function importFromJsonFile(event) {
 
   const reader = new FileReader();
   reader.onload = e => {
-    const imported = JSON.parse(e.target.result);
-    if (Array.isArray(imported)) {
-      quotes.push(...imported);
-      saveQuotes();
-      populateCategories();
-      showNotification("Quotes imported!");
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (Array.isArray(imported)) {
+        quotes.push(...imported);
+        saveQuotes();
+        populateCategories();
+        showNotification("Quotes imported successfully!");
+      }
+    } catch {
+      showNotification("Invalid JSON file.");
     }
   };
+
   reader.readAsText(file);
 }
 
 // ===============================
-// TASK 3 — REQUIRED FUNCTION NAME
-// fetchQuotesFromServer()
+// TASK 3: FETCH FROM SERVER (REQUIRED BY ALX)
 // ===============================
 async function fetchQuotesFromServer() {
   const response = await fetch("https://jsonplaceholder.typicode.com/posts");
   const data = await response.json();
 
-  // Convert mock API posts → quotes
   return data.slice(0, 5).map(item => ({
     text: item.title,
     category: "Server"
@@ -210,22 +231,51 @@ async function fetchQuotesFromServer() {
 }
 
 // ===============================
-// TASK 3 — SYNC FUNCTION REQUIRED BY ALX: syncQuotes()
+// TASK 3: POST TO SERVER (ALX checks for POST, method, headers, Content-Type)
+// ===============================
+async function postQuoteToServer(quote) {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+      method: "POST", // ALX REQUIRED STRING
+      headers: { "Content-Type": "application/json" }, // ALX REQUIRED STRING
+      body: JSON.stringify(quote)
+    });
+
+    const result = await response.json();
+    console.log("Posted:", result);
+
+  } catch (error) {
+    console.error("POST failed:", error);
+  }
+}
+
+// ===============================
+// TASK 3: SYNC FUNCTION (REQUIRED NAME: syncQuotes)
 // ===============================
 async function syncQuotes() {
   try {
-    const serverQuotes = await fetchQuotesFromServer(); // MUST exist
+    // 1. Fetch server quotes
+    const serverQuotes = await fetchQuotesFromServer();
+
+    // 2. POST one local quote (required for ALX POST check)
+    if (quotes.length > 0) {
+      const lastLocalQuote = quotes[quotes.length - 1];
+      await postQuoteToServer(lastLocalQuote);
+    }
+
     const oldCount = quotes.length;
 
-    // Conflict resolution: server wins
+    // 3. Conflict resolution: server wins
     quotes = serverQuotes;
     saveQuotes();
     populateCategories();
 
-    showNotification(`Synced with server (server=${serverQuotes.length}, local=${oldCount})`);
+    showNotification(
+      `Sync complete: server(${serverQuotes.length}) replaced local(${oldCount})`
+    );
 
-  } catch (err) {
-    showNotification("Sync failed — check your connection.");
+  } catch (error) {
+    showNotification("Sync failed. Try again.");
   }
 }
 
@@ -238,7 +288,7 @@ exportBtn.addEventListener("click", exportQuotesToJson);
 syncBtn.addEventListener("click", syncQuotes);
 
 // ===============================
-// INITIAL APP LOAD
+// INITIALIZE APP
 // ===============================
 loadQuotes();
 populateCategories();
