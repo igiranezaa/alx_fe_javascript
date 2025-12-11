@@ -16,7 +16,7 @@
       padding: 15px;
       background: #f0f0f0;
       border-left: 4px solid #444;
-      font-size: 1.2rem;
+      font-size: 1.25rem;
     }
 
     input, select {
@@ -47,17 +47,14 @@
 
   <h1>Dynamic Quote Generator — Task 2</h1>
 
-  <!-- Filter Section -->
   <h3>Filter Quotes by Category</h3>
   <select id="categoryFilter" onchange="filterQuotes()">
     <option value="all">All Categories</option>
   </select>
 
-  <!-- Display Area -->
   <div id="quoteDisplay"></div>
   <button id="newQuote">Show New Quote</button>
 
-  <!-- Add Quote -->
   <div id="addForm">
     <h3>Add a New Quote</h3>
 
@@ -67,12 +64,10 @@
     <button id="addQuoteBtn">Add Quote</button>
   </div>
 
-  <!-- JSON Import / Export -->
   <div id="storageSection">
     <h3>JSON Import / Export</h3>
 
     <button id="exportBtn">Export Quotes to JSON</button>
-
     <br><br>
 
     <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)">
