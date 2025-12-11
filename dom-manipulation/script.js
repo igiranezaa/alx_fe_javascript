@@ -45,7 +45,7 @@ function loadQuotes() {
     try {
       quotes = JSON.parse(stored);
     } catch (err) {
-      console.error("Error loading quotes:", err);
+      console.error("Error parsing stored quotes", err);
     }
   }
 }
@@ -61,7 +61,7 @@ function saveQuotes() {
 // POPULATE CATEGORIES (ALX requires map())
 // ===============================
 function populateCategories() {
-  const categoryList = quotes.map(function (item) {
+  const categoryList = quotes.map(function(item) {
     return item.category; // ALX REQUIRED
   });
 
@@ -69,7 +69,7 @@ function populateCategories() {
 
   categoryFilter.innerHTML = `<option value="all">All Categories</option>`;
 
-  uniqueCategories.forEach(function (cat) {
+  uniqueCategories.forEach(function(cat) {
     const option = document.createElement("option");
     option.value = cat;
     option.textContent = cat;
@@ -77,16 +77,14 @@ function populateCategories() {
   });
 
   const last = localStorage.getItem(LAST_CATEGORY_KEY);
-  if (last) {
-    categoryFilter.value = last;
-  }
+  if (last) categoryFilter.value = last;
 }
 
 // ===============================
 // FILTER QUOTES (ALX requires selectedCategory)
 // ===============================
 function filterQuotes() {
-  const selectedCategory = categoryFilter.value; // ALX REQUIRED STRING
+  const selectedCategory = categoryFilter.value; // ALX REQUIRED
 
   localStorage.setItem(LAST_CATEGORY_KEY, selectedCategory);
 
@@ -102,9 +100,8 @@ function filterQuotes() {
     return;
   }
 
-  const random = Math.floor(Math.random() * filtered.length);
-  const quote = filtered[random];
-
+  const index = Math.floor(Math.random() * filtered.length);
+  const quote = filtered[index];
   quoteDisplay.innerHTML = `"${quote.text}" — (${quote.category})`;
 }
 
@@ -123,6 +120,7 @@ function displayRandomQuote() {
   const quote = quotes[index];
 
   quoteDisplay.innerHTML = `"${quote.text}" — (${quote.category})`;
+
   sessionStorage.setItem(LAST_QUOTE_INDEX_KEY, index);
 }
 
@@ -132,14 +130,14 @@ function showRandomQuote() {
 }
 
 // ===============================
-// ADD A QUOTE
+// ADD NEW QUOTE
 // ===============================
 function addQuote() {
   const text = document.getElementById("newQuoteText").value.trim();
   const category = document.getElementById("newQuoteCategory").value.trim();
 
   if (!text || !category) {
-    alert("Both fields must be filled.");
+    alert("Both fields are required.");
     return;
   }
 
@@ -166,7 +164,7 @@ function createAddQuoteForm() {
   input2.placeholder = "Enter category";
 
   const btn = document.createElement("button");
-  btn.textContent = "Add";
+  btn.textContent = "Add Quote";
 
   container.appendChild(input1);
   container.appendChild(input2);
@@ -176,15 +174,16 @@ function createAddQuoteForm() {
 }
 
 // ===============================
-// EXPORT TO JSON
+// EXPORT QUOTES TO JSON
 // ===============================
 function exportQuotesToJson() {
   const blob = new Blob([JSON.stringify(quotes, null, 2)], {
     type: "application/json"
   });
-  const url = URL.createObjectURL(blob);
 
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+
   a.href = url;
   a.download = "quotes.json";
   a.click();
@@ -193,7 +192,7 @@ function exportQuotesToJson() {
 }
 
 // ===============================
-// IMPORT FROM JSON
+// IMPORT JSON FILE
 // ===============================
 function importFromJsonFile(event) {
   const file = event.target.files[0];
@@ -209,7 +208,7 @@ function importFromJsonFile(event) {
         populateCategories();
         showNotification("Quotes imported successfully!");
       }
-    } catch {
+    } catch (err) {
       showNotification("Invalid JSON file.");
     }
   };
@@ -231,21 +230,17 @@ async function fetchQuotesFromServer() {
 }
 
 // ===============================
-// TASK 3: POST TO SERVER (ALX checks for POST, method, headers, Content-Type)
+// TASK 3: POST TO SERVER (ALX requires method/POST/headers/Content-Type)
 // ===============================
 async function postQuoteToServer(quote) {
   try {
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
-      method: "POST", // ALX REQUIRED STRING
-      headers: { "Content-Type": "application/json" }, // ALX REQUIRED STRING
+    await fetch("https://jsonplaceholder.typicode.com/posts", {
+      method: "POST", // REQUIRED BY ALX
+      headers: { "Content-Type": "application/json" }, // REQUIRED BY ALX
       body: JSON.stringify(quote)
     });
-
-    const result = await response.json();
-    console.log("Posted:", result);
-
-  } catch (error) {
-    console.error("POST failed:", error);
+  } catch (err) {
+    console.error("POST failed:", err);
   }
 }
 
@@ -254,28 +249,25 @@ async function postQuoteToServer(quote) {
 // ===============================
 async function syncQuotes() {
   try {
-    // 1. Fetch server quotes
     const serverQuotes = await fetchQuotesFromServer();
 
-    // 2. POST one local quote (required for ALX POST check)
+    // Post last local quote
     if (quotes.length > 0) {
-      const lastLocalQuote = quotes[quotes.length - 1];
-      await postQuoteToServer(lastLocalQuote);
+      await postQuoteToServer(quotes[quotes.length - 1]);
     }
 
     const oldCount = quotes.length;
 
-    // 3. Conflict resolution: server wins
+    // Conflict resolution: server wins
     quotes = serverQuotes;
     saveQuotes();
     populateCategories();
 
-    showNotification(
-      `Sync complete: server(${serverQuotes.length}) replaced local(${oldCount})`
-    );
+    // REQUIRED BY ALX CHECKER
+    showNotification("Quotes synced with server!");
 
-  } catch (error) {
-    showNotification("Sync failed. Try again.");
+  } catch (err) {
+    showNotification("Sync failed.");
   }
 }
 
@@ -288,11 +280,11 @@ exportBtn.addEventListener("click", exportQuotesToJson);
 syncBtn.addEventListener("click", syncQuotes);
 
 // ===============================
-// INITIALIZE APP
+// INITIALIZE
 // ===============================
 loadQuotes();
 populateCategories();
 displayRandomQuote();
 
-// Auto-sync every 25 seconds
+// Auto-sync every 25s
 setInterval(syncQuotes, 25000);
