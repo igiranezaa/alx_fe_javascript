@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic Quote Generator — Task 2</title>
+  <title>Dynamic Quote Generator — Task 3</title>
 
   <style>
     body {
@@ -19,23 +19,20 @@
       font-size: 1.25rem;
     }
 
-    input, select {
+    input, select, button {
       padding: 8px;
       margin: 5px;
-      width: 260px;
     }
 
-    button {
-      padding: 10px 15px;
-      cursor: pointer;
-      margin-top: 10px;
+    #notification {
+      background: #fff3cd;
+      padding: 10px;
+      border: 1px solid #ffecb5;
+      display: none;
+      margin-top: 15px;
     }
 
-    #addForm {
-      margin-top: 20px;
-    }
-
-    #storageSection {
+    #storageSection, #syncSection {
       margin-top: 40px;
       padding: 15px;
       background: #eef4ff;
@@ -45,7 +42,7 @@
 </head>
 <body>
 
-  <h1>Dynamic Quote Generator — Task 2</h1>
+  <h1>Dynamic Quote Generator — Task 3</h1>
 
   <h3>Filter Quotes by Category</h3>
   <select id="categoryFilter" onchange="filterQuotes()">
@@ -54,6 +51,8 @@
 
   <div id="quoteDisplay"></div>
   <button id="newQuote">Show New Quote</button>
+
+  <div id="notification"></div>
 
   <div id="addForm">
     <h3>Add a New Quote</h3>
@@ -69,8 +68,12 @@
 
     <button id="exportBtn">Export Quotes to JSON</button>
     <br><br>
-
     <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)">
+  </div>
+
+  <div id="syncSection">
+    <h3>Server Sync</h3>
+    <button id="syncBtn">Sync with Server</button>
   </div>
 
   <script src="script.js"></script>
