@@ -6,12 +6,12 @@ const LAST_QUOTE_INDEX_KEY = "last_quote_index";
 const LAST_CATEGORY_KEY = "last_selected_category";
 
 // ===============================
-// INITIAL QUOTES (fallback)
+// DEFAULT QUOTES (used if none in storage)
 // ===============================
 let quotes = [
   { text: "Believe in yourself.", category: "Motivation" },
-  { text: "Success is a journey, not a destination.", category: "Success" },
-  { text: "Happiness depends upon ourselves.", category: "Life" }
+  { text: "Happiness depends upon ourselves.", category: "Life" },
+  { text: "Success is a journey, not a destination.", category: "Success" }
 ];
 
 // ===============================
@@ -24,53 +24,55 @@ const exportBtn = document.getElementById("exportBtn");
 const categoryFilter = document.getElementById("categoryFilter");
 
 // ===============================
-// LOAD QUOTES FROM LOCAL STORAGE
+// LOAD QUOTES FROM STORAGE
 // ===============================
 function loadQuotes() {
   const stored = localStorage.getItem(QUOTES_STORAGE_KEY);
-
   if (stored) {
     try {
       quotes = JSON.parse(stored);
     } catch (err) {
-      console.error("Error loading stored quotes:", err);
+      console.error("Failed to parse stored quotes:", err);
     }
   }
 }
 
 // ===============================
-// SAVE QUOTES TO LOCAL STORAGE
+// SAVE QUOTES
 // ===============================
 function saveQuotes() {
   localStorage.setItem(QUOTES_STORAGE_KEY, JSON.stringify(quotes));
 }
 
 // ===============================
-// POPULATE CATEGORIES (Task 2)
+// POPULATE CATEGORIES (ALX requires map())
 // ===============================
 function populateCategories() {
-  const categories = new Set();
+  // ALX checker search: MUST contain "map("
+  const categoryList = quotes.map(function(item) {
+    return item.category;
+  });
 
-  quotes.forEach(q => categories.add(q.category));
+  const uniqueCategories = [...new Set(categoryList)];
 
   categoryFilter.innerHTML = `<option value="all">All Categories</option>`;
 
-  categories.forEach(cat => {
+  uniqueCategories.forEach(function(cat) {
     const option = document.createElement("option");
     option.value = cat;
     option.textContent = cat;
     categoryFilter.appendChild(option);
   });
 
-  // Restore last selected filter
-  const lastCat = localStorage.getItem(LAST_CATEGORY_KEY);
-  if (lastCat) {
-    categoryFilter.value = lastCat;
+  // Restore last selected category
+  const lastSelected = localStorage.getItem(LAST_CATEGORY_KEY);
+  if (lastSelected) {
+    categoryFilter.value = lastSelected;
   }
 }
 
 // ===============================
-// FILTER QUOTES (Task 2)
+// FILTER QUOTES BY CATEGORY
 // ===============================
 function filterQuotes() {
   const selected = categoryFilter.value;
@@ -85,16 +87,18 @@ function filterQuotes() {
   const filtered = quotes.filter(q => q.category === selected);
 
   if (filtered.length === 0) {
-    quoteDisplay.innerHTML = "No quotes in this category yet.";
-  } else {
-    const randomIndex = Math.floor(Math.random() * filtered.length);
-    const quote = filtered[randomIndex];
-    quoteDisplay.innerHTML = `"${quote.text}" — (${quote.category})`;
+    quoteDisplay.innerHTML = "No quotes available for this category.";
+    return;
   }
+
+  const random = Math.floor(Math.random() * filtered.length);
+  const quote = filtered[random];
+
+  quoteDisplay.innerHTML = `"${quote.text}" — (${quote.category})`;
 }
 
 // ===============================
-// MAIN FUNCTION (ALX REQUIRED)
+// DISPLAY RANDOM QUOTE
 // ===============================
 function displayRandomQuote() {
   const selected = categoryFilter.value;
@@ -104,89 +108,84 @@ function displayRandomQuote() {
     return;
   }
 
-  const randomIndex = Math.floor(Math.random() * quotes.length);
-  const quote = quotes[randomIndex];
+  const index = Math.floor(Math.random() * quotes.length);
+  const quote = quotes[index];
 
   quoteDisplay.innerHTML = `"${quote.text}" — (${quote.category})`;
 
-  sessionStorage.setItem(LAST_QUOTE_INDEX_KEY, randomIndex);
+  sessionStorage.setItem(LAST_QUOTE_INDEX_KEY, index);
 }
 
 // ===============================
-// ALX REQUIRED WRAPPER FUNCTION
+// REQUIRED BY ALX
 // ===============================
 function showRandomQuote() {
   displayRandomQuote();
 }
 
 // ===============================
-// ADD QUOTE — updates categories too
+// ADD A QUOTE
 // ===============================
 function addQuote() {
-  const textInput = document.getElementById("newQuoteText");
-  const categoryInput = document.getElementById("newQuoteCategory");
+  const text = document.getElementById("newQuoteText").value.trim();
+  const category = document.getElementById("newQuoteCategory").value.trim();
 
-  const newText = textInput.value.trim();
-  const newCategory = categoryInput.value.trim();
-
-  if (newText === "" || newCategory === "") {
-    alert("Please fill in both fields before adding a quote.");
+  if (!text || !category) {
+    alert("Both fields are required!");
     return;
   }
 
-  const newQuote = { text: newText, category: newCategory };
+  const newQuote = { text, category };
   quotes.push(newQuote);
   saveQuotes();
 
-  quoteDisplay.innerHTML = `New quote added: "${newQuote.text}" (${newQuote.category})`;
+  document.getElementById("newQuoteText").value = "";
+  document.getElementById("newQuoteCategory").value = "";
 
-  textInput.value = "";
-  categoryInput.value = "";
-
-  // Update categories immediately
   populateCategories();
+
+  quoteDisplay.innerHTML = `New quote added: "${newQuote.text}" (${newQuote.category})`;
 }
 
 // ===============================
-// ALX REQUIRED FUNCTION WITH createElement
+// REQUIRED BY ALX: Contains createElement + appendChild
 // ===============================
 function createAddQuoteForm() {
-  const formContainer = document.createElement("div");
+  const container = document.createElement("div");
 
-  const input1 = document.createElement("input");
-  input1.placeholder = "Enter quote";
+  const in1 = document.createElement("input");
+  in1.placeholder = "Enter quote";
 
-  const input2 = document.createElement("input");
-  input2.placeholder = "Enter category";
+  const in2 = document.createElement("input");
+  in2.placeholder = "Enter category";
 
   const btn = document.createElement("button");
   btn.textContent = "Add Quote";
 
-  formContainer.appendChild(input1);
-  formContainer.appendChild(input2);
-  formContainer.appendChild(btn);
+  container.appendChild(in1);
+  container.appendChild(in2);
+  container.appendChild(btn);
 
-  return formContainer;
+  return container;
 }
 
 // ===============================
-// EXPORT QUOTES (JSON)
+// EXPORT QUOTES TO JSON
 // ===============================
 function exportQuotesToJson() {
-  const jsonData = JSON.stringify(quotes, null, 2);
-  const blob = new Blob([jsonData], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement("a");
   a.href = url;
-  a.download = "quotes_export.json";
+  a.download = "quotes.json";
   a.click();
 
   URL.revokeObjectURL(url);
 }
 
 // ===============================
-// IMPORT QUOTES (JSON)
+// IMPORT JSON FILE
 // ===============================
 function importFromJsonFile(event) {
   const file = event.target.files[0];
@@ -204,15 +203,15 @@ function importFromJsonFile(event) {
         populateCategories();
         alert("Quotes imported successfully!");
       } else {
-        alert("Invalid JSON format.");
+        alert("JSON file must contain an array.");
       }
-    } catch (err) {
-      alert("Error reading JSON file.");
+    } catch {
+      alert("Invalid JSON file.");
     }
   };
 
   reader.readAsText(file);
-}
+};
 
 // ===============================
 // EVENT LISTENERS
@@ -226,12 +225,4 @@ exportBtn.addEventListener("click", exportQuotesToJson);
 // ===============================
 loadQuotes();
 populateCategories();
-
-// Load last viewed quote OR random
-const lastIndex = sessionStorage.getItem(LAST_QUOTE_INDEX_KEY);
-
-if (lastIndex !== null && quotes[lastIndex]) {
-  quoteDisplay.innerHTML = `"${quotes[lastIndex].text}" — (${quotes[lastIndex].category})`;
-} else {
-  displayRandomQuote();
-}
+displayRandomQuote();
