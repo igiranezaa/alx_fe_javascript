@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic Quote Generator</title>
+  <title>Dynamic Quote Generator — Task 1</title>
 
   <style>
     body {
@@ -34,19 +34,23 @@
       cursor: pointer;
       margin-top: 10px;
     }
+
+    #storageSection {
+      margin-top: 40px;
+      padding: 15px;
+      background: #eef4ff;
+      border: 1px solid #aac0ff;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Dynamic Quote Generator</h1>
+  <h1>Dynamic Quote Generator — Task 1</h1>
 
-  <!-- random quote display -->
   <div id="quoteDisplay"></div>
-
-  <!-- button to show random quote -->
   <button id="newQuote">Show New Quote</button>
 
-  <!-- form to add new quotes -->
+  <!-- Add Quote -->
   <div id="addForm">
     <h3>Add a New Quote</h3>
 
@@ -54,6 +58,17 @@
     <input id="newQuoteCategory" type="text" placeholder="Enter quote category">
 
     <button id="addQuoteBtn">Add Quote</button>
+  </div>
+
+  <!-- Storage + JSON Section -->
+  <div id="storageSection">
+    <h3>JSON Import / Export</h3>
+
+    <button id="exportBtn">Export Quotes to JSON</button>
+
+    <br><br>
+
+    <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)">
   </div>
 
   <script src="script.js"></script>
